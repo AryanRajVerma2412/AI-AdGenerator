@@ -1,0 +1,14 @@
+**
+!Dockerfile
+!client/
+!client/**
+!server/
+!server/package*.json
+!server/src/
+!server/src/**
+!server/assets/
+!server/assets/**
+**/node_modules
+**/dist
+**/.env*
+**/.git

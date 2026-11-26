@@ -1,0 +1,28 @@
+{
+  "scenes": [
+    {
+      "sceneNumber": 1,
+      "sectionType": "hook",
+      "sceneText": "Meet Cobalt Mug. Take a closer look.",
+      "imagePrompt": "Wide three-quarter view of Cobalt Mug. Category: General Retail; mood: Professional. Preserve reference shape and colors, use soft directional light, realistic surface texture and a restrained matching palette. Keep the subject above the lower caption area in 9:16 framing.",
+      "duration": 4
+    },
+    {
+      "sceneNumber": 2,
+      "sectionType": "benefit",
+      "sceneText": "Dishwasher safe",
+      "imagePrompt": "Close-up material detail of Cobalt Mug. Category: General Retail; mood: Professional. Preserve reference shape and colors, use soft directional light, realistic surface texture and a restrained matching palette. Keep the subject above the lower caption area in 9:16 framing.",
+      "duration": 6
+    },
+    {
+      "sceneNumber": 3,
+      "sectionType": "cta",
+      "sceneText": "Explore the collection.",
+      "imagePrompt": "Eye-level view in a plausible use setting of Cobalt Mug. Category: General Retail; mood: Professional. Preserve reference shape and colors, use soft directional light, realistic surface texture and a restrained matching palette. Keep the subject above the lower caption area in 9:16 framing.",
+      "duration": 5
+    }
+  ],
+  "warnings": [
+    "Gemini script generation failed (HTTP 503). A local draft script was used; check the API key, model, and quota."
+  ]
+}

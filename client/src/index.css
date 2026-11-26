@@ -1,0 +1,75 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-[#F7F6EC] text-[#28301C] antialiased font-sans selection:bg-[#9A7E3B]/25 selection:text-[#1E2515];
+    min-height: 100vh;
+    background-image: 
+      radial-gradient(at 0% 0%, rgba(210, 207, 154, 0.25) 0px, transparent 50%),
+      radial-gradient(at 100% 0%, rgba(154, 126, 59, 0.08) 0px, transparent 50%),
+      radial-gradient(at 50% 100%, rgba(210, 207, 154, 0.2) 0px, transparent 50%);
+    background-attachment: fixed;
+  }
+
+  /* Custom sleek scrollbar matching light cream & dark olive */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #F7F6EC;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #D2CF9A;
+    border-radius: 9999px;
+    border: 1px solid rgba(40, 48, 28, 0.08);
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #9A7E3B;
+  }
+}
+
+@layer utilities {
+  .glass-card {
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(40, 48, 28, 0.1);
+    box-shadow: 0 4px 20px -2px rgba(40, 48, 28, 0.06);
+  }
+
+  .glass-card-hover {
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .glass-card-hover:hover {
+    transform: translateY(-3px);
+    border-color: rgba(154, 126, 59, 0.45);
+    box-shadow: 0 16px 32px -8px rgba(40, 48, 28, 0.12), 0 0 0 1px rgba(154, 126, 59, 0.25);
+  }
+
+  .glass-panel {
+    background: rgba(255, 255, 255, 0.96);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(40, 48, 28, 0.12);
+    box-shadow: 0 8px 30px -4px rgba(40, 48, 28, 0.08);
+  }
+
+  .gradient-text {
+    @apply bg-gradient-to-r from-[#1E2515] via-[#28301C] to-[#9A7E3B] bg-clip-text text-transparent;
+  }
+
+  .gradient-text-brand {
+    @apply bg-gradient-to-r from-[#1E2515] via-[#9A7E3B] to-[#B5954B] bg-clip-text text-transparent;
+  }
+
+  .glow-accent {
+    box-shadow: 0 0 25px -4px rgba(154, 126, 59, 0.25);
+  }
+
+  .glow-gold {
+    box-shadow: 0 0 25px -4px rgba(154, 126, 59, 0.35);
+  }
+}

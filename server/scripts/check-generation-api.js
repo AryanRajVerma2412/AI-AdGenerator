@@ -1,0 +1,62 @@
+// Real MongoDB + HTTP regression checks in an isolated test database. No paid calls.
+import 'dotenv/config';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import { randomUUID, createHash } from 'node:crypto';
+import mongoose from 'mongoose';
+import express from 'express';
+import jwt from 'jsonwebtoken';
+import Job from '../src/models/GenerationJob.js';
+import routes from '../src/routes/generation.routes.js';
+import { errorHandler } from '../src/middleware/error.js';
+import { reserveUsage, usageSummary } from '../src/services/usage.service.js';
+import { validateGeneration } from '../src/config/gemini.config.js';
+const dbName = `adgen_generation_test_${randomUUID().replaceAll('-', '')}`;
+let server, file;
+try {
+  await mongoose.connect(process.env.MONGODB_URI, { dbName });
+  await Job.init();
+  const owner = new mongoose.Types.ObjectId(), other = new mongoose.Types.ObjectId();
+  const token = id => jwt.sign({ id: String(id) }, process.env.JWT_SECRET);
+  const app = express(); app.use(express.json()); app.use('/api/generate', routes); app.use(errorHandler);
+  server = app.listen(0, '127.0.0.1'); await new Promise(r => server.once('listening', r));
+  const base = `http://127.0.0.1:${server.address().port}/api/generate`;
+  const get = (url, who = owner, options = {}) => fetch(`${base}${url}`, { ...options, headers: { Authorization: `Bearer ${token(who)}`, 'Content-Type': 'application/json', ...options.headers } });
+  assert.equal((await fetch(`${base}/config`)).status, 401);
+  const id = randomUUID(), requestKey = randomUUID();
+  const input = validateGeneration('video', { prompt: 'Test mug', duration: 8, aspectRatio: '16:9' });
+  const fingerprint = createHash('sha256').update(JSON.stringify({ kind: 'video', ...input })).update('').digest('hex');
+  await Job.create({ _id: id, userId: owner, kind: 'video', requestKey, fingerprint, activeKey: String(owner), ...input });
+  assert.equal((await get(`/video/${id}`, other)).status, 404);
+  const duplicate = await get('/video', owner, { method: 'POST', headers: { 'Idempotency-Key': requestKey }, body: JSON.stringify(input) });
+  assert.equal(duplicate.status, 202); assert.equal((await duplicate.json()).id, id); assert.equal(await Job.countDocuments(), 1);
+  const cancel = await get(`/video/${id}/cancel`, owner, { method: 'POST' });
+  assert.equal(cancel.status, 200); assert.equal((await cancel.json()).status, 'cancelled');
+  assert.equal((await get(`/video/${id}/cancel`, owner, { method: 'POST' })).status, 200);
+  assert.equal((await get(`/media/${id}`)).status, 409);
+  assert.equal((await Job.findById(id)).activeKey, undefined);
+  console.log('PASS: authentication, ownership, idempotency, cancellation, no cancelled preview');
+  const source = fs.readdirSync('uploads').find(n => /^final-.*\.mp4$/.test(n));
+  if (!source) throw new Error('Run check-formats.js first');
+  fs.mkdirSync('generation-output', { recursive: true });
+  file = path.resolve('generation-output', `api-test-${randomUUID()}.mp4`);
+  fs.copyFileSync(path.resolve('uploads', source), file);
+  await Job.updateOne({ _id: id }, { status: 'completed', file: path.basename(file), mimeType: 'video/mp4' });
+  assert.equal((await get(`/media/${id}/download`, other)).status, 404);
+  const download = await get(`/media/${id}/download`);
+  assert.equal(download.status, 200); assert.match(download.headers.get('content-disposition'), /attachment/);
+  assert.equal((await download.arrayBuffer()).byteLength, fs.statSync(file).size);
+  console.log('PASS: owner-only download returns exact stored MP4 bytes');
+  process.env.GENERATION_BUDGET_INR = '100';
+  const reservations = await Promise.allSettled(Array.from({ length: 10 }, () => reserveUsage('image')));
+  assert.equal(reservations.filter(r => r.status === 'fulfilled').length, 2);
+  assert.ok((await usageSummary()).reservedINR <= 100);
+  console.log('PASS: concurrent reservations cannot exceed application budget');
+} finally {
+  if (server) await new Promise(r => server.close(r));
+  if (file) fs.rmSync(file, { force: true });
+  // Only this randomly named, explicitly checked test database may be removed.
+  if (mongoose.connection.name === dbName && dbName.startsWith('adgen_generation_test_')) await mongoose.connection.dropDatabase();
+  await mongoose.disconnect();
+}
